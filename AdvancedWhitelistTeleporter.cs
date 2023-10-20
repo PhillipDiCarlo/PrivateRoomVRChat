@@ -112,29 +112,42 @@ public class AdvancedWhitelistTeleporter : UdonSharpBehaviour
     }
 
     private void UpdateTeleporterStatus()
+{
+    // If the room is locked, we enable/disable the respective objects and disable the teleporter.
+    if (lockRoom)
     {
-        // If the room is locked, we enable/disable the respective objects and disable the teleporter.
-        if (lockRoom)
+        teleportButton.SetActive(false); // disable the teleporter
+        foreach (GameObject obj in objectsToEnableWhenLocked)
         {
-            teleportButton.SetActive(false); // disable the teleporter
-            foreach (GameObject obj in objectsToEnableWhenLocked)
-            {
-                obj.SetActive(true);
-            }
-            foreach (GameObject obj in objectsToDisableWhenLocked)
-            {
-                obj.SetActive(false);
-            }
+            obj.SetActive(true);
         }
+        foreach (GameObject obj in objectsToDisableWhenLocked)
+        {
+            obj.SetActive(false);
+        }
+    }
+    else // this else corresponds to the room not being locked
+    {
         // If the room isn't locked and either everyone is allowed or the player is whitelisted.
-        else if (allowAllUsers || isWhitelisted.isOn) // checking the status of the toggle
+        if (allowAllUsers || isWhitelisted.isOn) // checking the status of the toggle
         {
             teleportButton.SetActive(true); // enable the teleporter
         }
         else
         {
-            // Default logic, possibly reverting the changes made in the other conditions.
             teleportButton.SetActive(false); // ensure the teleporter is disabled
         }
+
+        // Here we revert the objects to their original state when the room is not locked
+        foreach (GameObject obj in objectsToEnableWhenLocked)
+        {
+            obj.SetActive(false); // objects that were enabled when locked are now disabled
+        }
+        foreach (GameObject obj in objectsToDisableWhenLocked)
+        {
+            obj.SetActive(true); // objects that were disabled when locked are now enabled
+        }
     }
+}
+
 }
