@@ -1,5 +1,6 @@
 ﻿using UdonSharp;
 using UnityEngine;
+using UnityEngine.UI;
 using VRC.SDK3.StringLoading;
 using VRC.SDKBase;
 using VRC.Udon;
@@ -8,7 +9,7 @@ using VRC.Udon.Common.Interfaces;
 public class AdvancedWhitelistTeleporter : UdonSharpBehaviour
 {
     [Header("Teleportation Button")]
-    public GameObject teleportButton; // This is the button that triggers teleportation, which you already have set up.
+    public GameObject teleportButton; // This is the button that triggers teleportation.
 
     [Header("Objects to Enable/Disable")]
     public GameObject[] objectsToEnableWhenLocked;
@@ -17,80 +18,21 @@ public class AdvancedWhitelistTeleporter : UdonSharpBehaviour
     [Header("Whitelist URLs")]
     public VRCUrl[] urls;
 
-    private string full;
-    private string[] whitelisted = new string[0];
-    private bool isRoomLocked = false;
+    // UI Toggle for whitelist status
+    [Header("Whitelist Toggle Checker")]
+    public Toggle isWhitelisted; // Assign your toggle in the inspector
+
+    private bool lockRoom = false;
     private bool allowAllUsers = false;
 
-    [HideInInspector]
-    public string toggleType; // Will be set by the bridge script
-    [HideInInspector]
-    public bool toggleValue; // Will be set by the bridge script
+    private string full;
+    private string[] whitelisted = new string[0];
 
     void Start()
     {
-        Debug.Log("AdvancedWhitelistTeleporter: Start method called.");
-        // Existing setup for whitelist
         foreach (VRCUrl url in urls)
         {
             VRCStringDownloader.LoadUrl(url, (IUdonEventReceiver)this);
-        }
-
-        UpdateRoomLockState();
-        UpdateTeleportButtonState();
-    }
-
-    public void OnToggleChanged() // No parameters here, we'll use the public properties instead
-    {
-        Debug.Log($"AdvancedWhitelistTeleporter: OnToggleChanged called with toggleType: {toggleType}, toggleValue: {toggleValue}");
-        
-        if (toggleType == "LockRoom")
-        {
-            isRoomLocked = toggleValue;
-            UpdateRoomLockState();
-        }
-        else if (toggleType == "AllowAllUsers")
-        {
-            allowAllUsers = toggleValue;
-            UpdateTeleportButtonState();
-        }
-        else {
-            Debug.LogError("Error: Sent toggleType does not match an appropriate value.");
-        }
-    }
-
-    private void UpdateRoomLockState()
-    {
-        Debug.Log($"AdvancedWhitelistTeleporter: UpdateRoomLockState called. isRoomLocked: {isRoomLocked}");
-        foreach (GameObject obj in objectsToEnableWhenLocked)
-        {
-            obj.SetActive(isRoomLocked);
-        }
-
-        foreach (GameObject obj in objectsToDisableWhenLocked)
-        {
-            obj.SetActive(!isRoomLocked);
-        }
-
-        UpdateTeleportButtonState();
-    }
-
-    private void UpdateTeleportButtonState()
-    {
-        Debug.Log($"AdvancedWhitelistTeleporter: UpdateTeleportButtonState called. allowAllUsers: {allowAllUsers}, isRoomLocked: {isRoomLocked}");
-
-        if (isRoomLocked)
-        {
-            teleportButton.SetActive(false);
-        }
-        else
-        {
-
-            Debug.Log(IsNameInWhitelist(Networking.LocalPlayer.displayName));
-            ParseWhitelist();
-            // teleportButton.SetActive(allowAllUsers);
-            // teleportButton.SetActive(IsNameInWhitelist(Networking.LocalPlayer.displayName));
-            teleportButton.SetActive(allowAllUsers || IsNameInWhitelist(Networking.LocalPlayer.displayName));
         }
     }
 
@@ -118,16 +60,23 @@ public class AdvancedWhitelistTeleporter : UdonSharpBehaviour
             }
         }
 
-        UpdateTeleportButtonState();
+        // Check if the local player is in the whitelist and update the toggle accordingly
+        if (IsNameInWhitelist(Networking.LocalPlayer.displayName))
+        {
+            isWhitelisted.isOn = true;
+        }
+        else
+        {
+            isWhitelisted.isOn = false;
+        }
+
+        UpdateTeleporterStatus();
     }
 
     bool IsNameInWhitelist(string name)
     {
-        Debug.Log("Name brought in: " + name);
         for (int i = 0; i < whitelisted.Length; i++)
         {
-            Debug.Log("Name to compare to: " + whitelisted[i]);
-            Debug.Log("Does Name match?: " + (whitelisted[i] == name));
             if (whitelisted[i] == name)
             {
                 return true;
@@ -145,5 +94,47 @@ public class AdvancedWhitelistTeleporter : UdonSharpBehaviour
         }
         newWhitelist[whitelisted.Length] = name;
         whitelisted = newWhitelist;
+    }
+
+    public void HandleToggleChanged(ToggleEventBridge.ToggleType toggleType, bool value)
+    {
+        switch (toggleType)
+        {
+            case ToggleEventBridge.ToggleType.LockRoom:
+                lockRoom = value;
+                break;
+            case ToggleEventBridge.ToggleType.AllowAllUsers:
+                allowAllUsers = value;
+                break;
+        }
+
+        UpdateTeleporterStatus();
+    }
+
+    private void UpdateTeleporterStatus()
+    {
+        // If the room is locked, we enable/disable the respective objects and disable the teleporter.
+        if (lockRoom)
+        {
+            teleportButton.SetActive(false); // disable the teleporter
+            foreach (GameObject obj in objectsToEnableWhenLocked)
+            {
+                obj.SetActive(true);
+            }
+            foreach (GameObject obj in objectsToDisableWhenLocked)
+            {
+                obj.SetActive(false);
+            }
+        }
+        // If the room isn't locked and either everyone is allowed or the player is whitelisted.
+        else if (allowAllUsers || isWhitelisted.isOn) // checking the status of the toggle
+        {
+            teleportButton.SetActive(true); // enable the teleporter
+        }
+        else
+        {
+            // Default logic, possibly reverting the changes made in the other conditions.
+            teleportButton.SetActive(false); // ensure the teleporter is disabled
+        }
     }
 }

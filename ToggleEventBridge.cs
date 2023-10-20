@@ -34,9 +34,8 @@ public class ToggleEventBridge : MonoBehaviour
     // This method will be called whenever the Toggle's value changes
     public void OnToggleChanged(bool value)
     {
-        Debug.Log($"ToggleEventBridge: OnToggleChanged called with value: {value}");
-        targetScript.toggleType = toggleType.ToString();
-        targetScript.toggleValue = value;
-        targetScript.SendCustomEvent("OnToggleChanged");
+        // Directly call the method in AdvancedWhitelistTeleporter, passing the necessary info
+        targetScript.HandleToggleChanged(toggleType, value);
     }
+
 }
