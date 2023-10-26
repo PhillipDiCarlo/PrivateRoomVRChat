@@ -15,13 +15,7 @@ public class AdvancedWhitelistController : UdonSharpBehaviour
     private string[] whitelisted = new string[0];
     private void Start()
     {
-        // Get the current player's URL
-        VRCUrl playerUrl = Networking.LocalPlayer.userApiUrl;
-
-        // Check if the player's URL is in the whitelist
-        bool playerIsWhitelisted = false;
-
-        foreach (VRCUrl url in urls)
+       foreach (VRCUrl url in urls)
         {
             VRCStringDownloader.LoadUrl(url, (IUdonEventReceiver)this);
         }
@@ -60,5 +54,30 @@ public class AdvancedWhitelistController : UdonSharpBehaviour
         {
             isWhitelisted.isOn = false;
         }
+
+        UpdateTeleporterStatus();
+    }
+
+    bool IsNameInWhitelist(string name)
+    {
+        for (int i = 0; i < whitelisted.Length; i++)
+        {
+            if (whitelisted[i] == name)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void AddToWhitelist(string name)
+    {
+        string[] newWhitelist = new string[whitelisted.Length + 1];
+        for (int i = 0; i < whitelisted.Length; i++)
+        {
+            newWhitelist[i] = whitelisted[i];
+        }
+        newWhitelist[whitelisted.Length] = name;
+        whitelisted = newWhitelist;
     }
 }
