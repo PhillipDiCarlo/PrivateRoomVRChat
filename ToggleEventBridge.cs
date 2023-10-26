@@ -1,7 +1,8 @@
-﻿using UnityEngine;
+﻿using UdonSharp;
+using UnityEngine;
 using UnityEngine.UI; // Required for the Toggle component
 
-public class ToggleEventBridge : MonoBehaviour
+public class ToggleEventBridge : UdonSharpBehaviour
 {
     public AdvancedWhitelistTeleporter targetScript; // Assign the UdonSharpBehaviour script in the inspector
 
