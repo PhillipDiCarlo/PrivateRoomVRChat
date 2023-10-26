@@ -1,7 +1,10 @@
 using UdonSharp;
 using UnityEngine;
 using UnityEngine.UI;
+using VRC.SDK3.StringLoading;
 using VRC.SDKBase;
+using VRC.Udon;
+using VRC.Udon.Common.Interfaces;
 
 public class AdvancedWhitelistController : UdonSharpBehaviour
 {
@@ -54,8 +57,6 @@ public class AdvancedWhitelistController : UdonSharpBehaviour
         {
             isWhitelisted.isOn = false;
         }
-
-        UpdateTeleporterStatus();
     }
 
     bool IsNameInWhitelist(string name)
